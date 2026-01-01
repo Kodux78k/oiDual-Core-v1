@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ViViVi // DUAL — System Core</title>
+    
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="apple-touch-icon" href="./icon-192.png">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('Service Worker Registered'));
+  }
+</script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vivivi: {
+                            dark: '#050505',
+                            gold: '#ffd700',
+                            rose: '#ff007f',
+                            tiffany: '#00f6ff',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        code: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(40px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- CORE STYLES --- */
+        body {
+            background: radial-gradient(circle at top, #1a1c4b, #050505);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* Buttons */
+        .glass-btn {
+            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-btn:active { transform: scale(0.97); }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, rgba(0,246,255,0.1), rgba(255,0,127,0.1));
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-primary:hover { border-color: #00f6ff; box-shadow: 0 0 15px rgba(0,246,255,0.2); }
+
+        /* --- DUAL INFODOSE LOADERS --- */
+        :root {
+            --di-gold: color-mix(in oklab, #00f6ff 60%, #ff007f 40%);
+            --grad-a: #00f6ff;
+            --grad-b: #ff007f;
+        }
+
+        /* Main Nucleus Loader */
+        .di { 
+            --di-size: 50px; --di-stroke: 2px; 
+            position: relative; width: var(--di-size); height: var(--di-size); margin: 0 auto;
+        }
+        .di .ring {
+            position: absolute; inset: 0; border: var(--di-stroke) solid var(--di-gold); 
+            border-radius: 50%; animation: di-spin 6s linear infinite;
+        }
+        .di .stroke {
+            position: absolute; left: 50%; top: 50%; width: 62%; height: var(--di-stroke); 
+            background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); 
+            transform: translate(-50%, -50%); border-radius: 999px; 
+            animation: di-breathe 2.4s ease-in-out infinite;
+        }
+
+        /* Small Icon Loader (Coblux) */
+        .coblux {
+            position: relative; width: 32px; height: 32px; 
+            filter: drop-shadow(0 0 8px rgba(0,246,255,0.3));
+        }
+        .coblux .ring {
+            position: absolute; inset: 0; border-radius: 50%; 
+            background: conic-gradient(from 90deg, var(--grad-a), var(--grad-b)); 
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(50% - 1px), #000 calc(50% - 1px), #000 100%); 
+            animation: di-spin 2.4s linear infinite;
+        }
+
+        @keyframes di-spin { to { transform: rotate(360deg); } }
+        @keyframes di-breathe { 0%, 100% { opacity: .9; width: 62%; } 50% { opacity: 1; width: 75%; } }
+
+        /* Runtime/Editor Styles */
+        .code-area {
+            background: #08080a; color: #00f6ff; font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            width: 100%; padding: 12px; resize: none; font-size: 0.8rem;
+        }
+        .code-area:focus { border-color: #ff007f; outline: none; }
+
+        /* Accordion */
+        details > summary { list-style: none; cursor: pointer; }
+        details > summary::-webkit-details-marker { display: none; }
+        .rotate-icon { transition: transform 0.3s; }
+        details[open] .rotate-icon { transform: rotate(180deg); }
+        details[open] summary ~ * { animation: fadeIn 0.4s ease-in-out; }
+
+        /* Runtime Overlay */
+        #runtime-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: none; flex-direction: column;
+        }
+        #runtime-overlay.active { display: flex; animation: fadeIn 0.3s; }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-start p-0 sm:p-4 font-sans">
+
+    <nav class="fixed top-0 w-full max-w-md z-50 bg-vivivi-dark/80 backdrop-blur-md border-b border-white/5 px-6 py-4 flex justify-between items-center sm:rounded-t-3xl sm:mt-4">
+        <button onclick="app.switchView('landing')" class="opacity-80 hover:opacity-100 transition">
+            <h1 class="font-serif text-lg text-vivivi-gold tracking-widest">ViViVi</h1>
+            <span class="text-[9px] text-vivivi-tiffany tracking-[0.2em] uppercase">Dual Core</span>
+        </button>
+        
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" onclick="app.toggleMenu()">
+            <div class="di">
+                <div class="ring"></div>
+                <div class="stroke"></div>
+            </div>
+        </div>
+
+        <div class="flex gap-4 text-white/50">
+            <button onclick="app.switchView('quiz')" id="nav-quiz" class="hover:text-vivivi-rose transition"><i class="fa-solid fa-eye"></i></button>
+            <button onclick="app.switchView('vault')" id="nav-vault" class="hover:text-vivivi-tiffany transition"><i data-lucide="box"></i></button>
+        </div>
+    </nav>
+
+    <main class="w-full max-w-md mx-auto relative min-h-screen sm:min-h-[85vh] flex flex-col sm:rounded-b-3xl overflow-hidden bg-[#0f0c29]/50 pt-20 pb-10">
+
+        <section id="view-landing" class="h-full flex flex-col justify-center items-center text-center p-6 animate-fade-in mt-10">
+            <div class="relative mb-8">
+                <div class="absolute inset-0 bg-vivivi-rose opacity-20 blur-3xl rounded-full"></div>
+                <div class="coblux scale-[2]">
+                    <div class="ring"></div>
+                </div>
+            </div>
+            
+            <h2 class="text-3xl font-serif text-white mb-2">Dual Infodose</h2>
+            <p class="text-xs text-gray-400 uppercase tracking-widest mb-10">Sintonize & Codifique</p>
+
+            <div class="grid grid-cols-1 gap-4 w-full">
+                <button onclick="app.switchView('quiz')" class="glass-btn p-5 rounded-2xl flex items-center justify-between group">
+                    <div class="text-left">
+                        <div class="text-vivivi-gold font-serif text-lg">Oráculo</div>
+                        <div class="text-[10px] text-gray-400">Descubra seu Arquétipo</div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-vivivi-gold opacity-50 group-hover:opacity-100 transition"></i>
+                </button>
+
+                <button onclick="app.switchView('vault')" class="glass-btn p-5 rounded-2xl flex items-center justify-between group">
+                    <div class="text-left">
+                        <div class="text-vivivi-tiffany font-code text-lg">Vault // Uno</div>
+                        <div class="text-[10px] text-gray-400">Editor & Runtime</div>
+                    </div>
+                    <i data-lucide="code" class="text-vivivi-tiffany opacity-50 group-hover:opacity-100 transition"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="view-quiz" class="hidden flex flex-col min-h-full p-6 animate-slide-up">
+            <div class="w-full bg-white/5 rounded-full h-1 mb-8 mt-4">
+                <div id="progress-bar" class="bg-gradient-to-r from-vivivi-rose to-vivivi-tiffany h-1 rounded-full transition-all duration-500 shadow-[0_0_10px_#ff007f]" style="width: 0%"></div>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center">
+                <span class="text-vivivi-tiffany text-xs font-bold mb-4 uppercase tracking-widest block text-center">Frequência <span id="q-current">1</span> / <span id="q-total">5</span></span>
+                <h3 id="question-text" class="text-2xl font-serif text-center mb-10 leading-snug">Carregando...</h3>
+                <div id="options-container" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <section id="view-result" class="hidden p-6 pb-20 animate-slide-up">
+            <div class="text-center mb-8 relative mt-4">
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-gradient-to-r from-vivivi-rose to-vivivi-tiffany blur-[60px] opacity-30 rounded-full"></div>
+                <p class="text-xs text-gray-400 uppercase tracking-widest mb-2 relative z-10">Essência Detectada</p>
+                <h2 id="result-archetype" class="text-4xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-vivivi-gold via-white to-vivivi-gold drop-shadow-sm mb-4 relative z-10">...</h2>
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-vivivi-tiffany/30 bg-vivivi-tiffany/5 backdrop-blur-sm">
+                    <i class="fa-solid fa-spray-can-sparkles text-vivivi-tiffany text-xs"></i>
+                    <span class="text-xs text-gray-200 uppercase tracking-wider"><span id="result-aroma-name" class="font-bold text-white"></span></span>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-8">
+                <details class="glass-panel group" open>
+                    <summary class="flex justify-between items-center p-5 cursor-pointer">
+                        <span class="font-bold text-sm text-vivivi-gold uppercase tracking-wider"><i class="fa-solid fa-fingerprint mr-2"></i> Perfil</span>
+                        <i class="fa-solid fa-chevron-down text-gray-500 text-xs rotate-icon"></i>
+                    </summary>
+                    <div id="archetype-details" class="p-5 pt-0 text-sm text-gray-300 leading-relaxed space-y-2 border-t border-white/5 mt-2"></div>
+                </details>
+            </div>
+
+            <a href="#" onclick="app.activateAscii()" class="glass-btn btn-primary rounded-xl p-4 flex items-center justify-between group w-full mb-4 relative overflow-hidden">
+                <div class="absolute inset-0 bg-vivivi-rose/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500"></div>
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center border border-vivivi-rose/50">
+                        <i class="fa-solid fa-terminal text-vivivi-rose"></i>
+                    </div>
+                    <div class="text-left">
+                        <div class="font-bold text-sm text-white">Ativar ASCII DualInfodose</div>
+                        <div class="text-[10px] text-vivivi-tiffany uppercase tracking-wide">Protocolo IA</div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-bolt text-vivivi-gold relative z-10"></i>
+            </a>
+
+            <div class="text-center">
+                 <button onclick="app.switchView('vault')" class="text-xs text-gray-500 hover:text-white transition">Ir para Vault // Uno <i class="fa-solid fa-arrow-right ml-1"></i></button>
+            </div>
+        </section>
+
+        <section id="view-vault" class="hidden flex flex-col min-h-full p-6 animate-slide-up">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-code text-lg text-vivivi-tiffany">VAULT <span class="text-white/30 text-xs">// UNO</span></h3>
+                <div class="text-[10px] text-gray-500" id="vault-count">0 ARQUIVOS</div>
+            </div>
+
+            <div class="glass-panel p-4 mb-6">
+                <textarea id="quickCode" class="code-area h-24 mb-3" placeholder="// Insira código ou texto HTML..."></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="vault.paste()" class="glass-btn p-2 rounded-lg text-xs font-bold hover:bg-white/10 flex justify-center items-center gap-2">
+                        <i data-lucide="clipboard"></i> COLAR
+                    </button>
+                    <button onclick="vault.save()" class="glass-btn p-2 rounded-lg text-xs font-bold bg-white/10 hover:bg-vivivi-tiffany/20 text-vivivi-tiffany border-vivivi-tiffany/30 flex justify-center items-center gap-2">
+                        <i data-lucide="save"></i> SALVAR
+                    </button>
+                </div>
+            </div>
+
+            <div id="vault-list" class="space-y-3 pb-20">
+                </div>
+        </section>
+
+    </main>
+
+    <div id="runtime-overlay">
+        <div class="flex justify-between items-center p-4 border-b border-white/10 bg-vivivi-dark">
+            <div class="flex items-center gap-2">
+                <div class="coblux scale-75"><div class="ring"></div></div>
+                <span class="font-code text-xs text-vivivi-tiffany">RUNTIME LIVE</span>
+            </div>
+            <button onclick="vault.closeRuntime()" class="text-white hover:text-vivivi-rose"><i data-lucide="x"></i></button>
+        </div>
+        <div id="runtime-frame" class="flex-1 bg-white w-full h-full"></div>
+    </div>
+
+    <script>
+        // --- DATA & LOGIC ---
+        
+        const DB = {
+            archetypes: {
+                innocent: { name: "Inocente", aroma: "Paz", traits: "Simplicidade e Otimismo." },
+                explorer: { name: "Explorador", aroma: "Novos Caminhos", traits: "Liberdade e Autonomia." },
+                sage: { name: "Sábio", aroma: "Mente", traits: "Verdade e Conhecimento." },
+                hero: { name: "Herói", aroma: "Triunfo", traits: "Competência e Coragem." },
+                creator: { name: "Criador", aroma: "Criação", traits: "Imaginação e Inovação." },
+                ruler: { name: "Governante", aroma: "Poder", traits: "Controle e Liderança." },
+                magician: { name: "Mago", aroma: "Prosperidade", traits: "Transformação e Visão." },
+                lover: { name: "Amante", aroma: "Desejo", traits: "Intimidade e Sensualidade." }
+            },
+            questions: [
+                { text: "O que sua alma pede hoje?", options: [ {l:"Paz",t:['innocent']},{l:"Poder",t:['ruler']},{l:"Liberdade",t:['explorer']},{l:"Amor",t:['lover']} ] },
+                { text: "Diante do caos, você...", options: [ {l:"Lidera",t:['ruler','hero']},{l:"Cria algo",t:['creator']},{l:"Analisa",t:['sage']},{l:"Foge",t:['explorer']} ] },
+                { text: "Seu superpoder:", options: [ {l:"Paixão",t:['lover']},{l:"Ordem",t:['ruler']},{l:"Sabedoria",t:['sage']},{l:"Magia",t:['magician']} ] },
+                { text: "Objetivo final:", options: [ {l:"Legado",t:['hero','creator']},{l:"Felicidade",t:['innocent']},{l:"Entendimento",t:['sage']},{l:"Impacto",t:['magician']} ] },
+                { text: "Elemento:", options: [ {l:"Fogo",t:['hero']},{l:"Terra",t:['ruler']},{l:"Ar",t:['sage']},{l:"Água",t:['innocent']} ] }
+            ]
+        };
+
+        const app = {
+            state: { view: 'landing', qIndex: 0, scores: {} },
+            
+            init() {
+                lucide.createIcons();
+                vault.load();
+                // Check if user has result
+                const savedArch = localStorage.getItem('vivivi_arch');
+                if(savedArch && DB.archetypes[savedArch]) {
+                    this.renderResult(savedArch);
+                }
+            },
+
+            switchView(viewId) {
+                document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+                document.getElementById('view-' + viewId).classList.remove('hidden');
+                
+                // Active Nav State
+                document.getElementById('nav-quiz').style.color = viewId === 'quiz' ? '#ff007f' : '';
+                document.getElementById('nav-vault').style.color = viewId === 'vault' ? '#00f6ff' : '';
+
+                if(viewId === 'quiz' && this.state.qIndex === 0) this.startQuiz();
+                if(viewId === 'vault') vault.render();
+            },
+
+            startQuiz() {
+                Object.keys(DB.archetypes).forEach(k => this.state.scores[k] = 0);
+                this.state.qIndex = 0;
+                this.renderQuestion();
+            },
+
+            renderQuestion() {
+                const q = DB.questions[this.state.qIndex];
+                document.getElementById('q-current').innerText = this.state.qIndex + 1;
+                document.getElementById('q-total').innerText = DB.questions.length;
+                document.getElementById('question-text').innerText = q.text;
+                document.getElementById('progress-bar').style.width = `${((this.state.qIndex)/DB.questions.length)*100}%`;
+
+                const c = document.getElementById('options-container');
+                c.innerHTML = '';
+                q.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl glass-btn text-sm font-medium hover:bg-white/10 transition-all flex justify-between items-center group";
+                    btn.innerHTML = `<span>${opt.l}</span> <i class="fa-solid fa-chevron-right opacity-0 group-hover:opacity-100 transition-opacity text-vivivi-tiffany"></i>`;
+                    btn.onclick = () => {
+                        opt.t.forEach(t => { if(this.state.scores[t] !== undefined) this.state.scores[t]++; });
+                        this.nextQuestion();
+                    };
+                    c.appendChild(btn);
+                });
+            },
+
+            nextQuestion() {
+                this.state.qIndex++;
+                if(this.state.qIndex < DB.questions.length) {
+                    setTimeout(() => this.renderQuestion(), 200);
+                } else {
+                    const winner = Object.keys(this.state.scores).reduce((a,b) => this.state.scores[a] > this.state.scores[b] ? a : b);
+                    localStorage.setItem('vivivi_arch', winner);
+                    this.renderResult(winner);
+                    this.switchView('result');
+                }
+            },
+
+            renderResult(key) {
+                const arch = DB.archetypes[key];
+                document.getElementById('result-archetype').innerText = `O ${arch.name}`;
+                document.getElementById('result-aroma-name').innerText = `Aroma: ${arch.aroma}`;
+                document.getElementById('archetype-details').innerHTML = `<p>${arch.traits}</p>`;
+            },
+
+            activateAscii() {
+                const arch = document.getElementById('result-archetype').innerText;
+                const text = `Olá ASCII DualInfodose, concluí o protocolo ViViVi. Meu arquétipo é ${arch}. Solicito ativação.`;
+                window.open(`https://chat.openai.com/?q=${encodeURIComponent(text)}`, '_blank');
+            },
+
+            toggleMenu() {
+                this.switchView('landing');
+            }
+        };
+
+        const vault = {
+            data: [],
+            
+            load() {
+                this.data = JSON.parse(localStorage.getItem('uno_docs') || '[]');
+                this.renderCount();
+            },
+            
+            save() {
+                const content = document.getElementById('quickCode').value;
+                if(!content) return;
+                
+                const doc = {
+                    id: Date.now(),
+                    title: `INFO_${Date.now().toString().slice(-4)}`,
+                    content: content,
+                    date: new Date().toLocaleDateString()
+                };
+                
+                this.data.unshift(doc);
+                localStorage.setItem('uno_docs', JSON.stringify(this.data));
+                document.getElementById('quickCode').value = '';
+                this.render();
+            },
+
+            paste() {
+                navigator.clipboard.readText().then(t => document.getElementById('quickCode').value = t);
+            },
+
+            delete(id) {
+                if(confirm('Deletar arquivo?')) {
+                    this.data = this.data.filter(d => d.id !== id);
+                    localStorage.setItem('uno_docs', JSON.stringify(this.data));
+                    this.render();
+                }
+            },
+
+            run(id) {
+                const doc = this.data.find(d => d.id === id);
+                if(!doc) return;
+                
+                const frame = document.createElement('iframe');
+                frame.style.cssText = "width:100%; height:100%; border:none;";
+                const container = document.getElementById('runtime-frame');
+                container.innerHTML = '';
+                container.appendChild(frame);
+                frame.srcdoc = doc.content;
+                
+                document.getElementById('runtime-overlay').classList.add('active');
+            },
+
+            closeRuntime() {
+                document.getElementById('runtime-overlay').classList.remove('active');
+                document.getElementById('runtime-frame').innerHTML = '';
+            },
+
+            renderCount() {
+                document.getElementById('vault-count').innerText = `${this.data.length} ARQUIVOS`;
+            },
+
+            render() {
+                this.renderCount();
+                const list = document.getElementById('vault-list');
+                if(this.data.length === 0) {
+                    list.innerHTML = `<div class="text-center text-gray-600 text-xs py-10 font-code">// MEMÓRIA VAZIA</div>`;
+                    return;
+                }
+
+                list.innerHTML = this.data.map(doc => `
+                    <details class="glass-panel group overflow-hidden border-l-4 border-l-transparent hover:border-l-vivivi-tiffany transition-all">
+                        <summary class="flex justify-between items-center p-4 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <div class="coblux"><div class="ring"></div></div>
+                                <div>
+                                    <div class="font-code text-xs text-white font-bold">${doc.title}</div>
+                                    <div class="text-[9px] text-gray-500">${doc.date}</div>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-down" class="text-gray-500 w-4 rotate-icon"></i>
+                        </summary>
+                        <div class="p-4 pt-0 bg-black/20">
+                            <div class="bg-black p-2 rounded text-[10px] font-code text-gray-400 mb-3 max-h-20 overflow-hidden opacity-70">
+                                ${doc.content.substring(0, 100)}...
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="vault.run(${doc.id})" class="flex-1 py-2 rounded bg-vivivi-tiffany/10 text-vivivi-tiffany text-xs font-bold border border-vivivi-tiffany/30 hover:bg-vivivi-tiffany/20">EXECUTAR</button>
+                                <button onclick="vault.delete(${doc.id})" class="px-4 py-2 rounded bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </details>
+                `).join('');
+                lucide.createIcons();
+            }
+        };
+
+        // Boot
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
